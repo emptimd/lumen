@@ -16,7 +16,6 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
 
     $result = mysqli_query($conn, "SELECT SourceURL FROM campaign_backlinks where campaign_id=1353 and recheck_nr=0 limit 5");
     $data = mysqli_fetch_all($result);
-//    dd($data);
 
 
     // TEST MUlticurl
@@ -27,31 +26,34 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_multi_add_handle($mh,$ch);
     }
-    dd(2);
 
     $running=null;
+    do {
+        $mrc = curl_multi_exec($mh, $active);
+        dd($mrc);
+    } while ($active>0);
     //просто запускаем все соединени
-    while( ($mrc = curl_multi_exec($mh, $running))==CURLM_CALL_MULTI_PERFORM );
-    while($running && $mrc == CURLM_OK){
-        if($running and curl_multi_select($mh)!=-1 ){
-            do{
-                $mrc = curl_multi_exec($mh, $running);
-                // если поток завершился
-                if( $info=curl_multi_info_read($mh) and $info['msg'] == CURLMSG_DONE ){
-                    $ch = $info['handle'];
-                    // смотрим http код который он вернул
-//                    $status=curl_getinfo($ch,CURLINFO_HTTP_CODE);
-                    // и собственно что он вернул
-                    $data=curl_multi_getcontent($info['handle']);
-                    dd($data);
-                    curl_multi_remove_handle($mh, $ch);
-                    curl_close($ch);
-                }
-            }while ($mrc == CURLM_CALL_MULTI_PERFORM);
-        }
-        usleep(100);
-    }
-    dd(1);
+//    while( ($mrc = curl_multi_exec($mh, $running))==CURLM_CALL_MULTI_PERFORM );
+//    while($running && $mrc == CURLM_OK){
+//        if($running and curl_multi_select($mh)!=-1 ){
+//            do{
+//                $mrc = curl_multi_exec($mh, $running);
+//                // если поток завершился
+//                if( $info=curl_multi_info_read($mh) and $info['msg'] == CURLMSG_DONE ){
+//                    $ch = $info['handle'];
+//                    // смотрим http код который он вернул
+////                    $status=curl_getinfo($ch,CURLINFO_HTTP_CODE);
+//                    // и собственно что он вернул
+//                    $data=curl_multi_getcontent($info['handle']);
+//                    dd(1);
+//                    curl_multi_remove_handle($mh, $ch);
+//                    curl_close($ch);
+//                }
+//            }while ($mrc == CURLM_CALL_MULTI_PERFORM);
+//        }
+//        usleep(100);
+//    }
+//    dd(1);
 
     $titles=[];
 
