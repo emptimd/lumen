@@ -91,6 +91,7 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
     foreach($data as $item) {
         $multi_curl->addGet($item[0]);
     }
+    //1
 
     $multi_curl->start(); // Blocks until all items in the queue have been processed.
     echo (memory_get_usage() - $initialMem)/1024 . " Kbytes";exit;
