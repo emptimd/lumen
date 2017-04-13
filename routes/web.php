@@ -3,7 +3,10 @@
 use Curl\MultiCurl;
 use Illuminate\Http\Request;
 
-$app->get('/', 'ExampleController@index');
+//$app->get('/', 'ExampleController@index');
+$app->get('/', function() {
+    return 'Hello dude';
+});
 
 $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $id) {
 
@@ -153,21 +156,73 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
 
 
 $app->get('/debug', function () use ($app) {
-
-    $start = microtime(true);
-    $conn = mysqli_connect(
-        env('DB_HOST'),
-        env('DB_USERNAME'),
-        env('DB_PASSWORD'),
-        env('DB_DATABASE')
-    );
-//    $data = \DB::getPdo()->query("SELECT * FROM users")->fetchAll(4);
-    $result = mysqli_query($conn, "SELECT * FROM users");
-    $data = mysqli_fetch_assoc($result);
-    dd($data);
+//    $start = microtime(true);
+//    $conn = mysqli_connect(
+//        env('DB_HOST'),
+//        env('DB_USERNAME'),
+//        env('DB_PASSWORD'),
+//        env('DB_DATABASE')
+//    );
+//    $result = mysqli_query($conn, "SELECT * FROM users");
+//    $data = mysqli_fetch_assoc($result);
+//    $time = number_format((microtime(true) - $start), 7);
+//    echo "<p>$time seconds (<strong>" . number_format(1 / $time) . "</strong> per second)</p>";
+//    echo $time;
+//    exit;
+//    dd($data);
 //    $users = $app->make('db')->select('SELECT * from users');
 //    $data = \DB::select('SELECT * FROM users');
+
+    $start = microtime(true);
+    $initialMem = memory_get_usage();
+    $ch = curl_init('http://ihtik.lib.ru/2011.07_ihtik_hudlit-ru/');//http://ihtik.lib.ru/2011.07_ihtik_hudlit-ru/
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+
+    $html = curl_exec($ch);
+//    $html = file_get_contents('https://yandex.ru/pogoda/kishinev');
+
+
+//    \phpQuery::newDocument($html);
+//    $title = pq('title')->html();
+//    $anchor_texts = [];
+//    foreach(pq('a') as $item) {
+//        $anchor_texts[] = [
+//            'text' => pq($item)->text(),
+//            'href' => pq($item)->attr('href')
+//        ];
+//    }
+
+//    dd($anchor_texts);
+
+//    dd(pq('a')->count());
+//
+//    dd($title);
+//    \phpQuery::unloadDocuments();
+
+
+    $saw = new nokogiri($html);
+    $title = $saw->get('title')->toText();
+    $anchor_texts = [];
+    foreach($saw->get('a')->toDom()->getElementsByTagName('a') as $item) {
+        $anchor_texts[] = [
+            'text' => $item->textContent,
+            'href' => $item->getAttribute('href')
+        ];
+    }
+    print_r($anchor_texts);
+//    foreach($saw->get('a') as $item) {
+//        $anchor_texts[] = [
+////            'text' => $item['#text'],
+//            'href' => $item['href']
+//        ];
+//    }
+//    $i=0;
+//    foreach($saw->get('a')->toTextArray() as $item) {
+//        $anchor_texts[$i++]['text'] = $item;
+//    }
+
     $time = number_format(microtime(true) - $start, 7);
     echo "<p>$time seconds (<strong>" . number_format(1 / $time) . "</strong> per second)</p>";
-    exit;
+    echo (memory_get_usage() - $initialMem)/1024 . " Kbytes";exit;
 });

@@ -9,7 +9,8 @@
         "laravel/lumen-framework": "5.4.*",
         "vlucas/phpdotenv": "~2.2",
         "coderockr/php-query": " *@dev",
-        "php-curl-class/php-curl-class": "^7.2"
+        "php-curl-class/php-curl-class": "^7.2",
+        "olamedia/nokogiri": "^1.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
