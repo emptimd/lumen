@@ -25,7 +25,12 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
     $titles=[];
     $anchor_texts = [];
     $codes = [];
-
+//        $ch = curl_init('http://topsape.ru/r=xk2?http://stasva.com/8-prichin-zavesti-blog/');
+//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//        curl_setopt($ch, CURLOPT_HEADER, true);    // we want headers
+//        curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
+//        $html = curl_exec($ch);
+//        dd($html);
 
 //    foreach($data as $item) {
 //        /*======curl====*/
@@ -92,7 +97,7 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
     /*TEST 2 MULTICURL Library*/
     // Requests in parallel with callback functions.
     $multi_curl = new MultiCurl();
-    $multi_curl->setOpt(CURLOPT_FOLLOWLOCATION, 1);
+    $multi_curl->setOpt(CURLOPT_FOLLOWLOCATION, true);
 
     $multi_curl->success(function($instance) use (&$titles, &$anchor_texts) {
         $saw = new nokogiri($instance->response);
@@ -106,6 +111,7 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
         }
     });
     $multi_curl->error(function($instance) {
+        dd($instance->errorCode);
 //        echo 'call to "' . $instance->url . '" was unsuccessful.' . "\n";
 //        echo 'error code: ' . $instance->errorCode . "\n";
 //        echo 'error message: ' . $instance->errorMessage . "\n";
