@@ -1,11 +1,21 @@
 <?php
 
+use App\Jobs\ExampleJob;
 use Curl\MultiCurl;
 use Illuminate\Http\Request;
 
 //$app->get('/', 'ExampleController@index');
 $app->get('/', function() {
+
+//    ini_set('display_errors', 1);
+//    restore_error_handler();
+//
+//    echo $as;
     return 'Hello dude';
+});
+
+$app->get('job', function() {
+    dispatch(new ExampleJob);
 });
 
 $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $id) {
@@ -13,24 +23,40 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
     $start = microtime(true);
     $initialMem = memory_get_usage();
     /* Script comes here */
-    $conn = mysqli_connect(
-        env('DB_HOST'),
-        env('DB_USERNAME'),
-        env('DB_PASSWORD'),
-        env('DB_DATABASE')
-    );
-
-    $result = mysqli_query($conn, "SELECT SourceURL FROM campaign_backlinks where campaign_id=1353 and recheck_nr=0 order by id desc limit 77");
-    $data = mysqli_fetch_all($result);
-    $titles=[];
+//    $conn = mysqli_connect(
+//        env('DB_HOST'),
+//        env('DB_USERNAME'),
+//        env('DB_PASSWORD'),
+//        env('DB_DATABASE')
+//    );
+//
+//    $result = mysqli_query($conn, "SELECT SourceURL FROM campaign_backlinks where campaign_id=1353 and recheck_nr=0 order by id desc limit 77");
+//    $data = mysqli_fetch_all($result);
+//    $titles=[];
     $anchor_texts = [];
-    $codes = [];
+//    $codes = [];
+//    dd($data);
 //        $ch = curl_init('http://topsape.ru/r=xk2?http://stasva.com/8-prichin-zavesti-blog/');
 //        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 //        curl_setopt($ch, CURLOPT_HEADER, true);    // we want headers
 //        curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
 //        $html = curl_exec($ch);
 //        dd($html);
+
+//    $ch = curl_init('http://topsape.ru/reader/blog/1517/');
+    $ch = curl_init('https://yandex.ru/pogoda/kishinev');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//    curl_setopt($ch, CURLOPT_HEADER, true);    // we want headers
+//    curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
+    $html = curl_exec($ch);
+    $saw = new nokogiri($html);
+    foreach($saw->get('a')->toDom()->getElementsByTagName('a') as $a) {
+        $anchor_texts[] = [
+            'text' => $a->textContent,
+            'href' => $a->getAttribute('href')
+        ];
+    }
+    dd($anchor_texts);
 
 //    foreach($data as $item) {
 //        /*======curl====*/
@@ -97,7 +123,8 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
     /*TEST 2 MULTICURL Library*/
     // Requests in parallel with callback functions.
     $multi_curl = new MultiCurl();
-    $multi_curl->setOpt(CURLOPT_FOLLOWLOCATION, true);
+    $multi_curl->setOpt(CURLOPT_FOLLOWLOCATION, 1);
+    $multi_curl->setOpt(CURLOPT_RETURNTRANSFER, true);
 
     $multi_curl->success(function($instance) use (&$titles, &$anchor_texts) {
         $saw = new nokogiri($instance->response);
@@ -111,14 +138,14 @@ $app->post('/post/{id}', ['middleware' => 'auth', function (Request $request, $i
         }
     });
     $multi_curl->error(function($instance) {
-        dd($instance->errorCode);
+//        dd($instance->errorCode);
 //        echo 'call to "' . $instance->url . '" was unsuccessful.' . "\n";
 //        echo 'error code: ' . $instance->errorCode . "\n";
 //        echo 'error message: ' . $instance->errorMessage . "\n";
     });
     $multi_curl->complete(function($instance) use ($titles, &$codes) {
         $httpcode = curl_getinfo($instance->curl, CURLINFO_HTTP_CODE);
-        $codes[] = $httpcode;
+        $codes[] = [$instance->url, $httpcode];
 //        dd($httpcode);
 //        echo 'call completed' . "\n";
     });
@@ -259,3 +286,84 @@ $app->get('/debug', function () use ($app) {
     echo "<p>$time seconds (<strong>" . number_format(1 / $time) . "</strong> per second)</p>";
     echo (memory_get_usage() - $initialMem)/1024 . " Kbytes";exit;
 });
+
+$app->get('memory', function() {
+    echo 'Memory in use: ' . memory_get_usage() . ' ('. ((memory_get_usage() / 1024) / 1024) .'M) <br>';
+    echo 'Peak usage: ' . memory_get_peak_usage() . ' ('. ((memory_get_peak_usage() / 1024) / 1024) .'M) <br>';
+    echo 'Memory limit: ' . ini_get('memory_limit') . '<br>';
+    $initialMem = memory_get_usage();
+//    function asd() {
+//        echo 123123;
+//    }
+//    asd();
+//    exit;
+//    $html = file_get_contents('/home/user/sites/linkquidator-master/storage/app/majestic/2017/03/14/GetBackLinkData-3926-19_34_05.json');//https://yandex.ru/pogoda/kishinev
+//    $html = fopen('/home/user/sites/linkquidator-master/storage/app/majestic/2017/03/14/GetBackLinkData-3926-19_34_05.json', 'r');//https://yandex.ru/pogoda/kishinev
+//    $contents = '';
+//    $buffer = fgets($html, 4096);
+//    echo $buffer;
+//    while (!feof($html)) {
+//        $contents .= fread($html, 8192);
+//    }
+//    fclose($html);
+    foreach(nums() as $key => $item) {
+//        dd(json_decode(mb_substr($item, 0, strpos($item, '}')+1)));
+//        if($key == 3294) {
+//            dd($item);
+//            dd(mb_substr($item, 0, strpos($item, '}')+1));
+//
+//
+//
+//        }
+        $var = json_decode(mb_substr($item, 0, strpos($item, '}')+1));
+        if(!$var) continue;
+//        dd($var);
+//        dd(mb_substr($item, 0, -2));
+        echo $key.'<br>';
+        echo $var->SourceURL.'<br>';
+//        dd($var->SourceURL);
+
+//        return;
+    }
+
+
+//    $t = fread($html, 1024);
+//    dd(strlen($contents));
+//    $saw = new nokogiri($html);
+//    $title = $saw->get('title')->toText();
+//    $anchor_texts = [];
+////        echo $asd;
+//    print_r($title);
+    echo "<br>";
+    echo (memory_get_usage() - $initialMem)/1024 . " Kbytes";exit;
+
+    echo 'Memory in use: ' . memory_get_usage() . ' ('. ((memory_get_usage() / 1024) / 1024) .'M) <br>';
+    echo 'Peak usage: ' . memory_get_peak_usage() . ' ('. ((memory_get_peak_usage() / 1024) / 1024) .'M) <br>';
+    exit;
+});
+
+function nums() {
+    $html = fopen('/home/user/sites/linkquidator-master/storage/app/majestic/2017/03/14/GetBackLinkData-3926-19_34_05.json', 'r');//https://yandex.ru/pogoda/kishinev
+//    while (($line = fgets($html)) !== false) {
+//        yield 'key' => $line;
+//    }
+    $obj = '';
+    for($i=0,$j=0,$obj_c=0; ($line = fgets($html)) !== false; $i++) {
+        if($i < 32) continue;
+//        dd(strpos($line, 'DomainsInfo'));
+        if(strpos($line, 'DomainsInfo') !== false) return;
+        $j++;
+        $obj .= $line;
+        if($j === 33) {
+            yield $obj_c++ => $obj;
+            $obj = '';
+            $j=0;
+        }
+//        yield $i => $line;
+
+    }
+
+
+    fclose($html);
+}
+
